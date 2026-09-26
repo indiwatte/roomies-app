@@ -1,8 +1,12 @@
 import { Redirect } from "expo-router";
 import { useState } from "react";
-import { StyleSheet, Text, View, TextInput, Pressable } from "react-native";
+import { StyleSheet, Text, View, TextInput } from "react-native";
 
-import { useRooms } from "@/features/rooms/room-context";
+import Button from "@/components/Button";
+import Card from "@/components/Card";
+import ScreenHeader from "@/components/ScreenHeader";
+import { useRooms } from "@/features/rooms/room-store";
+import { colors } from "../../constants/colors";
 
 export default function ProfileScreen() {
     const { currentRoom, members, setMyProfile } = useRooms();
@@ -17,31 +21,29 @@ export default function ProfileScreen() {
 
     const handleSave = () => {
         if (!name.trim()) return;
-        setMyProfile(name, "#F6CFA3");
+        setMyProfile(name, colors.assigneeBorder);
         setSaved(true);
         setTimeout(() => setSaved(false), 2000);
     };
 
     return (
         <View style={styles.container}>
-            <Text style={styles.title}>Your Profile</Text>
-            <Text style={styles.subtitle}>Set your name for room {currentRoom.name}.</Text>
+            <ScreenHeader title="Your Profile" subtitle={`Set your name for room ${currentRoom.name}.`} />
 
-            <View style={styles.form}>
+            <Card style={styles.form}>
                 <Text style={styles.label}>Your Name</Text>
                 <TextInput
                     style={styles.input}
                     placeholder="Enter your name..."
+                    placeholderTextColor={colors.textDisabled}
                     value={name}
                     onChangeText={setName}
                 />
 
-                <Pressable style={styles.button} onPress={handleSave}>
-                    <Text style={styles.buttonText}>Save Profile</Text>
-                </Pressable>
+                <Button title="Save Profile" variant="dark" onPress={handleSave} />
 
                 {saved && <Text style={styles.successText}>Profile saved successfully! ✓</Text>}
-            </View>
+            </Card>
         </View>
     );
 }
@@ -50,55 +52,30 @@ const styles = StyleSheet.create({
     container: {
         flex: 1,
         padding: 24,
-        backgroundColor: "#F8F7F4",
-    },
-    title: {
-        fontSize: 28,
-        fontWeight: "700",
-        color: "#222",
-        marginBottom: 8,
-    },
-    subtitle: {
-        fontSize: 16,
-        color: "#666",
-        marginBottom: 24,
+        backgroundColor: colors.screenBg,
     },
     form: {
-        backgroundColor: "#FFF",
         padding: 20,
-        borderRadius: 18,
-        borderWidth: 1,
-        borderColor: "#E7E2D9",
     },
     label: {
         fontSize: 14,
         fontWeight: "600",
-        color: "#666",
+        color: colors.textSecondary,
         marginBottom: 8,
     },
     input: {
         borderWidth: 1,
-        borderColor: "#DDD",
+        borderColor: colors.border,
         borderRadius: 12,
         padding: 16,
         fontSize: 16,
-        backgroundColor: "#FAFAFA",
+        backgroundColor: colors.background,
         marginBottom: 20,
-    },
-    button: {
-        padding: 16,
-        borderRadius: 12,
-        backgroundColor: "#222",
-        alignItems: "center",
-    },
-    buttonText: {
-        color: "#FFF",
-        fontSize: 16,
-        fontWeight: "600",
+        color: colors.dark,
     },
     successText: {
         marginTop: 12,
-        color: "#526B4C",
+        color: colors.checkCircleBg,
         fontWeight: "600",
         textAlign: "center",
     },

@@ -2,7 +2,9 @@ import { Link, Redirect, Stack, useLocalSearchParams } from "expo-router";
 import { useEffect } from "react";
 import { StyleSheet, Text, View } from "react-native";
 
-import { useRooms } from "@/features/rooms/room-context";
+import Card from "@/components/Card";
+import { useRooms } from "@/features/rooms/room-store";
+import { colors } from "../../constants/colors";
 
 export default function RoomScreen() {
     const { code } = useLocalSearchParams<{ code: string }>();
@@ -24,10 +26,12 @@ export default function RoomScreen() {
             <>
                 <Stack.Screen options={{ title: "Room" }} />
                 <View style={styles.container}>
-                    <Text style={styles.title}>Room niet gevonden</Text>
-                    <Link href="/join-room" style={styles.link}>
-                        Join met een geldige code
-                    </Link>
+                    <Card style={styles.card}>
+                        <Text style={styles.title}>Room niet gevonden</Text>
+                        <Link href="/join-room" style={styles.link}>
+                            Join met een geldige code
+                        </Link>
+                    </Card>
                 </View>
             </>
         );
@@ -40,17 +44,22 @@ const styles = StyleSheet.create({
         alignItems: "center",
         justifyContent: "center",
         padding: 24,
-        backgroundColor: "#F8F7F4",
+        backgroundColor: colors.screenBg,
+    },
+    card: {
+        width: "100%",
+        alignItems: "center",
     },
     title: {
         fontSize: 28,
         fontWeight: "700",
+        color: colors.dark,
         marginBottom: 16,
         textAlign: "center",
     },
     link: {
         fontSize: 16,
-        color: "#222",
+        color: colors.dark,
         textDecorationLine: "underline",
     },
 });

@@ -1,19 +1,23 @@
 import { Stack } from "expo-router";
 import { StyleSheet, Text, View } from "react-native";
 
+import Card from "@/components/Card";
+import ScreenHeader from "@/components/ScreenHeader";
+import { colors } from "../constants/colors";
+
 export default function TaskDetailScreen() {
     return (
         <>
             <Stack.Screen options={{ title: "Task detail" }} />
             <View style={styles.container}>
-                <Text style={styles.title}>Dishwasher duty</Text>
-                <Text style={styles.meta}>Assigned to: You</Text>
-                <Text style={styles.meta}>Reward: 20 coins</Text>
+                <ScreenHeader title="Dishwasher duty" subtitle="Assigned to: You • Reward: 20 coins" />
 
-                <Text style={styles.sectionTitle}>Notes</Text>
-                <Text style={styles.body}>
-                    Placeholder detail screen for the next step in the task flow.
-                </Text>
+                <Card>
+                    <Text style={styles.sectionTitle}>Notes</Text>
+                    <Text style={styles.body}>
+                        Placeholder detail screen for the next step in the task flow.
+                    </Text>
+                </Card>
             </View>
         </>
     );
@@ -23,29 +27,17 @@ const styles = StyleSheet.create({
     container: {
         flex: 1,
         padding: 24,
-        backgroundColor: "#F8F7F4",
-    },
-    title: {
-        fontSize: 30,
-        fontWeight: "700",
-        color: "#222",
-        marginBottom: 12,
-    },
-    meta: {
-        fontSize: 16,
-        color: "#666",
-        marginBottom: 4,
+        backgroundColor: colors.screenBg,
     },
     sectionTitle: {
         fontSize: 18,
         fontWeight: "700",
-        color: "#222",
-        marginTop: 24,
+        color: colors.dark,
         marginBottom: 8,
     },
     body: {
         fontSize: 16,
-        color: "#444",
+        color: colors.textPrimary,
         lineHeight: 24,
     },
 });

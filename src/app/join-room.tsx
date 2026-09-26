@@ -3,13 +3,16 @@ import { router, Stack } from "expo-router";
 import {
     KeyboardAvoidingView,
     Platform,
-    Pressable,
     StyleSheet,
     Text,
     TextInput,
 } from "react-native";
 
-import { useRooms } from "@/features/rooms/room-context";
+import Button from "@/components/Button";
+import Card from "@/components/Card";
+import ScreenHeader from "@/components/ScreenHeader";
+import { useRooms } from "@/features/rooms/room-store";
+import { colors } from "../constants/colors";
 
 export default function JoinRoomScreen() {
     const { joinRoom } = useRooms();
@@ -40,30 +43,33 @@ export default function JoinRoomScreen() {
                 style={styles.container}
                 behavior={Platform.OS === "ios" ? "padding" : undefined}
             >
-                <Text style={styles.label}>Room code</Text>
-                <TextInput
-                    style={styles.input}
-                    placeholder="Bijv. ABC123"
-                    value={code}
-                    onChangeText={(value) => {
-                        setCode(value.toUpperCase());
-                        setError(null);
-                    }}
-                    autoCapitalize="characters"
-                    autoFocus
-                    maxLength={6}
-                    returnKeyType="done"
-                    onSubmitEditing={handleJoin}
-                />
-                {error ? <Text style={styles.error}>{error}</Text> : null}
+                <ScreenHeader title="Join a room" subtitle="Use your 6-digit code to enter an existing room." />
 
-                <Pressable
-                    style={[styles.button, !canSubmit && styles.buttonDisabled]}
-                    onPress={handleJoin}
-                    disabled={!canSubmit}
-                >
-                    <Text style={styles.buttonText}>Join room</Text>
-                </Pressable>
+                <Card>
+                    <TextInput
+                        style={styles.input}
+                        placeholder="Bijv. ABC123"
+                        placeholderTextColor={colors.textDisabled}
+                        value={code}
+                        onChangeText={(value) => {
+                            setCode(value.toUpperCase());
+                            setError(null);
+                        }}
+                        autoCapitalize="characters"
+                        autoFocus
+                        maxLength={6}
+                        returnKeyType="done"
+                        onSubmitEditing={handleJoin}
+                    />
+                    {error ? <Text style={styles.error}>{error}</Text> : null}
+
+                    <Button
+                        title="Join room"
+                        variant="dark"
+                        onPress={handleJoin}
+                        disabled={!canSubmit}
+                    />
+                </Card>
             </KeyboardAvoidingView>
         </>
     );
@@ -73,39 +79,20 @@ const styles = StyleSheet.create({
     container: {
         flex: 1,
         padding: 24,
-        backgroundColor: "#F8F7F4",
-    },
-    label: {
-        fontSize: 14,
-        fontWeight: "600",
-        color: "#666",
-        marginBottom: 8,
+        backgroundColor: colors.screenBg,
     },
     input: {
         borderWidth: 1,
-        borderColor: "#ddd",
+        borderColor: colors.borderLight,
         borderRadius: 12,
         padding: 16,
         fontSize: 16,
-        backgroundColor: "white",
+        backgroundColor: colors.white,
         marginBottom: 12,
+        color: colors.dark,
     },
     error: {
-        color: "#C0392B",
+        color: colors.primary,
         marginBottom: 12,
-    },
-    button: {
-        padding: 16,
-        borderRadius: 12,
-        backgroundColor: "#222",
-        alignItems: "center",
-    },
-    buttonDisabled: {
-        opacity: 0.4,
-    },
-    buttonText: {
-        color: "white",
-        fontSize: 16,
-        fontWeight: "600",
     },
 });

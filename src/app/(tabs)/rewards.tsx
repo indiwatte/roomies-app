@@ -1,71 +1,108 @@
-import { StyleSheet, Text, View } from "react-native";
-import { useSafeAreaInsets } from "react-native-safe-area-context";
+import { useMemo } from "react";
+import { ScrollView, StyleSheet, Text, View } from "react-native";
 
-import { useRooms } from "@/features/rooms/room-context";
-import { typography } from '../../constants/typography';
+import Card from "@/components/Card";
+import ScreenHeader from "@/components/ScreenHeader";
+import { useRooms } from "@/features/rooms/room-store";
+import { colors } from "../../constants/colors";
+
+const BASE_REWARDS = [
+    { id: "r1", title: "Movie Night", points: 120, description: "Finish all weekly tasks." },
+    { id: "r2", title: "Take-out Friday", points: 180, description: "Keep shared spaces clean for 7 days." },
+    { id: "r3", title: "Chore-Free Sunday", points: 250, description: "Complete your assigned tasks on time." },
+];
 
 export default function RewardsScreen() {
-    const { currentRoom } = useRooms();
-    const insets = useSafeAreaInsets();
+    const { currentRoom, members } = useRooms();
+
+    const rewards = useMemo(() => {
+        if (!currentRoom) return [];
+        const bonus = members.length * 10;
+
+        return BASE_REWARDS.map((reward) => ({
+            ...reward,
+            points: reward.points + bonus,
+        }));
+    }, [currentRoom, members.length]);
 
     if (!currentRoom) {
-        return null;
+        return (
+            <View style={styles.container}>
+                <Text style={styles.title}>No current room</Text>
+            </View>
+        );
     }
 
     return (
-        <View style={[styles.container, { paddingTop: insets.top + 64 }]}>
-            <Text style={styles.title}>Rewards</Text>
-            <Text style={styles.subtitle}>
-                Define what house points unlock for {currentRoom.name}.
-            </Text>
+        <ScrollView style={styles.container} contentContainerStyle={styles.content}>
+            <ScreenHeader
+                title={`Rewards for ${currentRoom.name}`}
+                subtitle="Collect points together and unlock room rewards."
+            />
 
-            <View style={styles.card}>
-                <Text style={styles.cardTitle}>Pizza night</Text>
-                <Text style={styles.cardMeta}>120 coins</Text>
-            </View>
+            {rewards.map((reward) => (
+                <Card key={reward.id} style={styles.rewardCard}>
+                    <View style={styles.rewardTopRow}>
+                        <Text style={styles.rewardTitle}>{reward.title}</Text>
+                        <View style={styles.pointsBadge}>
+                            <Text style={styles.pointsText}>{reward.points} pts</Text>
+                        </View>
+                    </View>
 
-            <View style={styles.card}>
-                <Text style={styles.cardTitle}>Skip one chore</Text>
-                <Text style={styles.cardMeta}>80 coins</Text>
-            </View>
-        </View>
+                    <Text style={styles.rewardDescription}>{reward.description}</Text>
+                </Card>
+            ))}
+        </ScrollView>
     );
 }
 
 const styles = StyleSheet.create({
     container: {
         flex: 1,
-        padding: 24,
-        backgroundColor: "#F8F7F4",
+        backgroundColor: colors.background,
     },
     title: {
-         ...typography.title,
-        fontSize: 28,
+        fontSize: 26,
         fontWeight: "700",
-        color: "#222",
-        marginBottom: 8,
+        color: colors.dark,
+        paddingHorizontal: 24,
+        paddingTop: 72,
     },
-    subtitle: {
-        fontSize: 16,
-        color: "#666",
-        marginBottom: 24,
+    content: {
+        paddingHorizontal: 24,
+        paddingTop: 72,
+        paddingBottom: 130,
+        gap: 12,
     },
-    card: {
-        padding: 20,
-        borderRadius: 18,
-        backgroundColor: "#FFFFFF",
-        borderWidth: 1,
-        borderColor: "#E7E2D9",
-        marginBottom: 16,
+    rewardCard: {
+        gap: 10,
     },
-    cardTitle: {
+    rewardTopRow: {
+        flexDirection: "row",
+        alignItems: "center",
+        justifyContent: "space-between",
+    },
+    rewardTitle: {
+        color: colors.dark,
         fontSize: 18,
         fontWeight: "700",
-        color: "#222",
-        marginBottom: 6,
+        flex: 1,
+        marginRight: 8,
     },
-    cardMeta: {
+    pointsBadge: {
+        backgroundColor: colors.blue,
+        borderRadius: 999,
+        paddingHorizontal: 10,
+        paddingVertical: 6,
+    },
+    pointsText: {
+        color: colors.dark,
+        fontSize: 12,
+        fontWeight: "700",
+    },
+    rewardDescription: {
+        color: colors.dark,
         fontSize: 14,
-        color: "#666",
+        lineHeight: 20,
     },
 });

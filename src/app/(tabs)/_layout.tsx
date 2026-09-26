@@ -14,7 +14,7 @@ import {
 } from "react-native";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 
-import { useRooms } from "@/features/rooms/room-context";
+import { useRooms } from "@/features/rooms/room-store";
 import { colors } from '../../constants/colors';
 import { typography } from '../../constants/typography';
 
@@ -141,16 +141,16 @@ export default function TabLayout() {
 
   if (isLoading) {
     return (
-      <View style={{ flex: 1, backgroundColor: "#F8F7F4", alignItems: "center", justifyContent: "center" }}>
+      <View style={{ flex: 1, backgroundColor: colors.screenBg, alignItems: "center", justifyContent: "center" }}>
         <Image
           source={require("../../../assets/loading-cat.png")}
           style={{ width: 160, height: 160, marginBottom: 20 }}
           resizeMode="contain"
         />
-        <Text style={{ fontSize: 24, fontWeight: "800", color: "#222", marginBottom: 6 }}>
+        <Text style={{ fontSize: 24, fontWeight: "800", color: colors.textPrimary, marginBottom: 6 }}>
           I see you...
         </Text>
-        <Text style={{ fontSize: 14, color: "#666", fontStyle: "italic" }}>
+        <Text style={{ fontSize: 14, color: colors.textSecondary, fontStyle: "italic" }}>
           Even loeren naar je huishouden...
         </Text>
       </View>
@@ -184,7 +184,7 @@ export default function TabLayout() {
             backgroundColor: colors.white,
             borderWidth: 1,
             borderColor: colors.blue,
-            shadowColor: "#C78CB0",
+            shadowColor: colors.addButtonShadow,
             shadowOpacity: 0.16,
             shadowRadius: 18,
             shadowOffset: { width: 0, height: 10 },
@@ -282,7 +282,7 @@ const styles = StyleSheet.create({
     overflow: "hidden",
     borderWidth: 1,
     borderColor: colors.white,
-    shadowColor: "#C78CB0",
+    shadowColor: colors.addButtonShadow,
     shadowOpacity: 0.18,
     shadowRadius: 8,
     shadowOffset: { width: 0, height: 4 },

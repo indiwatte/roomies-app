@@ -1,90 +1,103 @@
-import React from 'react';
-import { Pressable, Text, StyleSheet, ActivityIndicator, ViewStyle, TextStyle } from 'react-native';
-import { colors } from '../constants/colors';
+import type { ReactNode } from "react";
+import { Pressable, StyleSheet, Text, View, type StyleProp, type TextStyle, type ViewStyle } from "react-native";
+
+import { colors } from "../constants/colors";
+
+type ButtonVariant = "primary" | "dark" | "light" | "outline" | "secondary" | "ghost";
 
 type ButtonProps = {
     title: string;
     onPress: () => void;
-    variant?: 'primary' | 'secondary' | 'outline' | 'dark';
-    loading?: boolean;
+    variant?: ButtonVariant;
     disabled?: boolean;
-    style?: ViewStyle;
-    textStyle?: TextStyle;
-    icon?: React.ReactNode;
+    icon?: ReactNode;
+    style?: StyleProp<ViewStyle>;
+    textStyle?: StyleProp<TextStyle>;
+};
+
+const variantStyles: Record<ButtonVariant, { container: ViewStyle; text: TextStyle }> = {
+    primary: {
+        container: { backgroundColor: colors.primary, borderColor: colors.primary, borderWidth: 1 },
+        text: { color: colors.white },
+    },
+    dark: {
+        container: { backgroundColor: colors.dark, borderColor: colors.dark, borderWidth: 1 },
+        text: { color: colors.white },
+    },
+    light: {
+        container: { backgroundColor: colors.white, borderColor: colors.background, borderWidth: 1 },
+        text: { color: colors.dark },
+    },
+    outline: {
+        container: { backgroundColor: colors.background, borderColor: colors.dark, borderWidth: 1 },
+        text: { color: colors.dark },
+    },
+    secondary: {
+        container: { backgroundColor: colors.blue, borderColor: colors.blue, borderWidth: 1 },
+        text: { color: colors.dark },
+    },
+    ghost: {
+        container: { backgroundColor: colors.background, borderColor: colors.background, borderWidth: 1 },
+        text: { color: colors.dark },
+    },
 };
 
 export default function Button({
     title,
     onPress,
-    variant = 'primary',
-    loading = false,
+    variant = "primary",
     disabled = false,
+    icon,
     style,
     textStyle,
-    icon,
 }: ButtonProps) {
-
-   
-    const variantStyles = {
-        primary: { bg: colors.primary, text: colors.white, border: 'transparent' },
-        dark: { bg: colors.dark, text: colors.white, border: 'transparent' },
-        secondary: { bg: colors.blue, text: colors.dark, border: 'transparent' },
-        outline: { bg: 'transparent', text: colors.dark, border: colors.dark },
-    };
-
-    const current = variantStyles[variant] || variantStyles.primary;
-
-    const backgroundColor = disabled ? '#EFEBE4' : current.bg;
-    const textColor = disabled ? '#A8A29E' : current.text;
-    const borderColor = disabled ? 'transparent' : current.border;
+    const tone = variantStyles[variant] ?? variantStyles.primary;
 
     return (
         <Pressable
+            accessibilityRole="button"
             onPress={onPress}
-            disabled={disabled || loading}
+            disabled={disabled}
             style={({ pressed }) => [
-                styles.button,
-                {
-                    backgroundColor,
-                    borderColor,
-                    borderWidth: variant === 'outline' ? 1.5 : 0,
-                    opacity: pressed ? 0.85 : 1,
-                },
+                styles.base,
+                tone.container,
+                disabled && styles.disabled,
+                pressed && !disabled && styles.pressed,
                 style,
             ]}
         >
-            {loading ? (
-                <ActivityIndicator color={textColor} />
-            ) : (
-                <>
-                    {icon}
-                    <Text style={[styles.text, { color: textColor }, textStyle]}>
-                        {title}
-                    </Text>
-                </>
-            )}
+            <View style={styles.content}>
+                {icon ? <View style={styles.iconWrap}>{icon}</View> : null}
+                <Text style={[styles.label, tone.text, textStyle]}>{title}</Text>
+            </View>
         </Pressable>
     );
 }
 
 const styles = StyleSheet.create({
-    button: {
-        paddingVertical: 16,
-        paddingHorizontal: 20,
-        borderRadius: 18,
-        flexDirection: 'row',
-        alignItems: 'center',
-        justifyContent: 'center',
-        gap: 8,
-        shadowColor: '#3C222D',
-        shadowOpacity: 0.1,
-        shadowRadius: 6,
-        shadowOffset: { width: 0, height: 3 },
-        elevation: 3,
+    base: {
+        minHeight: 48,
+        borderRadius: 14,
+        paddingHorizontal: 16,
+        justifyContent: "center",
+        alignItems: "center",
     },
-    text: {
-        fontSize: 15,
-        fontWeight: '700',
-        letterSpacing: 0.3,
+    content: {
+        flexDirection: "row",
+        alignItems: "center",
+        justifyContent: "center",
+    },
+    iconWrap: {
+        marginRight: 8,
+    },
+    label: {
+        fontSize: 16,
+        fontWeight: "700",
+    },
+    disabled: {
+        opacity: 0.5,
+    },
+    pressed: {
+        opacity: 0.85,
     },
 });

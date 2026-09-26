@@ -1,12 +1,13 @@
 import { router } from "expo-router";
-import { Image, Pressable, StyleSheet, Text, View } from "react-native";
+import { Image, StyleSheet, Text, View } from "react-native";
 import { useAudioPlayer } from "expo-audio";
 import { useEffect } from "react";
 
-import { useRooms } from "@/features/rooms/room-context";
+import { useRooms } from "@/features/rooms/room-store";
 import { colors } from '../constants/colors';
-import Button from "@/components/Button"; 
-import { typography } from '../constants/typography';
+import Button from "@/components/Button";
+import Card from "@/components/Card";
+import ScreenHeader from "@/components/ScreenHeader";
 
 export default function LandingScreen() {
     const { currentRoom } = useRooms();
@@ -28,15 +29,15 @@ export default function LandingScreen() {
             <View style={styles.header}>
                 <Text style={styles.logo}>Homi</Text>
 
-                <Text style={styles.title}>Together we work better</Text>
-
-                <Text style={styles.subtitle}>
-                    Hello there, Im Homi, your shared house cat from now on, so let's maintain our shared homes in a cozy and fun way
-                </Text>
+                <ScreenHeader
+                    title="Together we work better"
+                    subtitle="Hello there, Im Homi, your shared house cat from now on, so let's maintain our shared homes in a cozy and fun way"
+                    style={styles.heroHeader}
+                />
             </View>
 
             {currentRoom ? (
-                <View style={styles.roomCard}>
+                <Card style={styles.roomCard}>
                     <Text style={styles.roomLabel}>Active room</Text>
                     <Text style={styles.roomName}>{currentRoom.name}</Text>
                     <Text style={styles.roomCode}>{currentRoom.code}</Text>
@@ -47,10 +48,10 @@ export default function LandingScreen() {
                         onPress={() => router.push("/(tabs)")}
                         style={{ paddingVertical: 12 }}
                     />
-                </View>
+                </Card>
             ) : null}
 
-            
+
 
             {/* De kat illustratie met blauwe achtergrondcirkel */}
             <View style={styles.imageContainer}>
@@ -76,7 +77,7 @@ export default function LandingScreen() {
                     onPress={() => router.push("/join-room")}
                 />
             </View>
-            
+
         </View>
     );
 }
@@ -91,7 +92,7 @@ const styles = StyleSheet.create({
         paddingHorizontal: 24,
         backgroundColor: colors.background, // primary color
     },
-   
+
 
     header: {
         alignItems: "center",
@@ -101,37 +102,22 @@ const styles = StyleSheet.create({
     logo: {
         fontSize: 42,
         fontWeight: "700",
-        color: "#3C222D",
+        color: colors.dark,
         marginBottom: 30,
         marginTop: 30,
     },
-
-    title: {
-        ...typography.title,
-        fontSize: 24,
-        textAlign: "center",
-        marginBottom: 20,
-    },
-
-    subtitle: {
-        fontSize: 14,
-        textAlign: "center",
-        color: "#3C222D",
-        paddingHorizontal: 10,
+    heroHeader: {
+        alignItems: "center",
+        marginBottom: 0,
     },
     roomCard: {
         width: "100%",
-        padding: 16,
-        borderRadius: 18,
-        backgroundColor: "#FFFFFF",
-        borderWidth: 1,
-        borderColor: "#E7E2D9",
         marginBottom: 10,
     },
     roomLabel: {
         fontSize: 12,
         fontWeight: "600",
-        color: "#7D7464",
+        color: colors.textMuted,
         marginBottom: 4,
         textTransform: "uppercase",
         letterSpacing: 1,
@@ -139,24 +125,13 @@ const styles = StyleSheet.create({
     roomName: {
         fontSize: 20,
         fontWeight: "700",
-        color: "#3C222D",
+        color: colors.dark,
     },
     roomCode: {
         fontSize: 14,
-        color: "#666",
+        color: colors.textSecondary,
         marginTop: 2,
         marginBottom: 10,
-    },
-    roomButton: {
-        padding: 12,
-        borderRadius: 12,
-        backgroundColor: "#ECE7DD",
-        alignItems: "center",
-    },
-    roomButtonText: {
-        color: "#3C222D",
-        fontSize: 14,
-        fontWeight: "600",
     },
     imageContainer: {
         width: "100%",

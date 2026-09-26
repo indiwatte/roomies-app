@@ -4,7 +4,6 @@ import {
     ActivityIndicator,
     Alert,
     Image,
-    Pressable,
     ScrollView,
     StyleSheet,
     Text,
@@ -12,10 +11,14 @@ import {
     View,
 } from "react-native";
 
+import Button from "@/components/Button";
+import Card from "@/components/Card";
+import ScreenHeader from "@/components/ScreenHeader";
 import { createTask } from "../api/tasks";
 import { ensureRoom } from "../api/rooms";
 import { ensureMembers } from "../api/members";
-import { useRooms } from "@/features/rooms/room-context";
+import { useRooms } from "@/features/rooms/room-store";
+import { colors } from "../constants/colors";
 
 export default function AddTaskScreen() {
     const [title, setTitle] = useState("");
@@ -117,80 +120,86 @@ export default function AddTaskScreen() {
         <>
             <Stack.Screen options={{ title: "Add task" }} />
             <ScrollView style={styles.container} contentContainerStyle={styles.scrollContent}>
-                <Text style={styles.label}>Task title</Text>
-                <TextInput
-                    style={styles.input}
-                    placeholder="Bijv. Keuken opruimen"
-                    value={title}
-                    onChangeText={setTitle}
+                <ScreenHeader
+                    title="Add task"
+                    subtitle="Create a new task and assign it to one of your homies."
                 />
 
-                <Text style={styles.label}>Description</Text>
-                <TextInput
-                    style={styles.input}
-                    placeholder="Extra details..."
-                    value={description}
-                    onChangeText={setDescription}
-                />
+                <Card>
+                    <Text style={styles.label}>Task title</Text>
+                    <TextInput
+                        style={styles.input}
+                        placeholder="Bijv. Keuken opruimen"
+                        placeholderTextColor={colors.textDisabled}
+                        value={title}
+                        onChangeText={setTitle}
+                    />
 
-                <Text style={styles.label}>Due Date (YYYY-MM-DD)</Text>
-                <TextInput
-                    style={styles.input}
-                    placeholder="2026-12-31"
-                    value={dueDate}
-                    onChangeText={setDueDate}
-                />
+                    <Text style={styles.label}>Description</Text>
+                    <TextInput
+                        style={styles.input}
+                        placeholder="Extra details..."
+                        placeholderTextColor={colors.textDisabled}
+                        value={description}
+                        onChangeText={setDescription}
+                    />
 
-                <Text style={styles.label}>Due Time</Text>
-                <TextInput
-                    style={styles.input}
-                    placeholder="18:00"
-                    value={dueTime}
-                    onChangeText={setDueTime}
-                />
+                    <Text style={styles.label}>Due Date (YYYY-MM-DD)</Text>
+                    <TextInput
+                        style={styles.input}
+                        placeholder="2026-12-31"
+                        placeholderTextColor={colors.textDisabled}
+                        value={dueDate}
+                        onChangeText={setDueDate}
+                    />
 
-                <Text style={styles.label}>Assign to</Text>
-                <View style={styles.memberRow}>
-                    {members.map((member) => {
-                        const isSelected = selectedMemberId === member.id;
+                    <Text style={styles.label}>Due Time</Text>
+                    <TextInput
+                        style={styles.input}
+                        placeholder="18:00"
+                        placeholderTextColor={colors.textDisabled}
+                        value={dueTime}
+                        onChangeText={setDueTime}
+                    />
 
-                        return (
-                            <Pressable
-                                key={member.id}
-                                style={[styles.memberChip, isSelected && styles.memberChipSelected]}
-                                onPress={() => setSelectedMemberId(member.id)}
-                            >
-                                {member.avatarUri ? (
-                                    <Image source={{ uri: member.avatarUri }} style={styles.memberAvatar} />
-                                ) : (
-                                    <View style={[styles.memberAvatar, { backgroundColor: member.avatarColor }]}>
-                                        <Text style={styles.memberInitials}>{member.initials}</Text>
-                                    </View>
-                                )}
-                                <Text
-                                    style={[styles.memberName, isSelected && styles.memberNameSelected]}
-                                    numberOfLines={1}
+                    <Text style={styles.label}>Assign to</Text>
+                    <View style={styles.memberRow}>
+                        {members.map((member) => {
+                            const isSelected = selectedMemberId === member.id;
+
+                            return (
+                                <Card
+                                    key={member.id}
+                                    onPress={() => setSelectedMemberId(member.id)}
+                                    style={[styles.memberChip, isSelected && styles.memberChipSelected]}
                                 >
-                                    {member.memberName}
-                                </Text>
-                            </Pressable>
-                        );
-                    })}
-                </View>
+                                    {member.avatarUri ? (
+                                        <Image source={{ uri: member.avatarUri }} style={styles.memberAvatar} />
+                                    ) : (
+                                        <View style={[styles.memberAvatar, { backgroundColor: member.avatarColor }]}> 
+                                            <Text style={styles.memberInitials}>{member.initials}</Text>
+                                        </View>
+                                    )}
+                                    <Text
+                                        style={[styles.memberName, isSelected && styles.memberNameSelected]}
+                                        numberOfLines={1}
+                                    >
+                                        {member.memberName}
+                                    </Text>
+                                </Card>
+                            );
+                        })}
+                    </View>
 
-                <Pressable
-                    style={[styles.button, (saving || syncing) && styles.buttonDisabled]}
-                    onPress={handleSaveTask}
-                    disabled={saving || syncing}
-                >
-                    {saving ? (
-                        <ActivityIndicator color="#FFF" />
-                    ) : (
-                        <Text style={styles.buttonText}>
-                            {syncing ? "Even synchroniseren..." : "Save task"}
-                        </Text>
-                    )}
-                </Pressable>
+                    <Button
+                        title={syncing ? "Even synchroniseren..." : "Save task"}
+                        variant="dark"
+                        onPress={handleSaveTask}
+                        disabled={saving || syncing}
+                        icon={saving ? <ActivityIndicator color={colors.white} /> : undefined}
+                        style={styles.saveButton}
+                    />
+                </Card>
             </ScrollView>
         </>
     );
@@ -199,7 +208,7 @@ export default function AddTaskScreen() {
 const styles = StyleSheet.create({
     container: {
         flex: 1,
-        backgroundColor: "#F8F7F4",
+        backgroundColor: colors.screenBg,
     },
     scrollContent: {
         padding: 24,
@@ -208,17 +217,18 @@ const styles = StyleSheet.create({
     label: {
         fontSize: 14,
         fontWeight: "600",
-        color: "#666",
+        color: colors.textSecondary,
         marginBottom: 8,
     },
     input: {
         borderWidth: 1,
-        borderColor: "#DDD",
+        borderColor: colors.borderLight,
         borderRadius: 12,
         padding: 16,
         fontSize: 16,
-        backgroundColor: "#FFF",
+        backgroundColor: colors.white,
         marginBottom: 20,
+        color: colors.dark,
     },
     memberRow: {
         flexDirection: "row",
@@ -231,13 +241,11 @@ const styles = StyleSheet.create({
         alignItems: "center",
         padding: 8,
         borderRadius: 14,
-        borderWidth: 1,
-        borderColor: "#DDD",
-        backgroundColor: "#FFF",
+        backgroundColor: colors.white,
     },
     memberChipSelected: {
-        borderColor: "#222",
-        backgroundColor: "#F0EEE9",
+        borderColor: colors.dark,
+        backgroundColor: colors.background,
     },
     memberAvatar: {
         width: 40,
@@ -250,30 +258,18 @@ const styles = StyleSheet.create({
     memberInitials: {
         fontSize: 13,
         fontWeight: "700",
-        color: "#3A3128",
+        color: colors.assigneeText,
     },
     memberName: {
         fontSize: 11,
-        color: "#666",
+        color: colors.textSecondary,
         textAlign: "center",
     },
     memberNameSelected: {
-        color: "#222",
+        color: colors.dark,
         fontWeight: "700",
     },
-    button: {
-        padding: 16,
-        borderRadius: 12,
-        backgroundColor: "#222",
-        alignItems: "center",
+    saveButton: {
         marginBottom: 40,
-    },
-    buttonDisabled: {
-        opacity: 0.6,
-    },
-    buttonText: {
-        color: "#FFF",
-        fontSize: 16,
-        fontWeight: "600",
     },
 });

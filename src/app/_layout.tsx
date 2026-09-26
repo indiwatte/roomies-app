@@ -1,5 +1,4 @@
 import { Stack } from "expo-router";
-import { RoomProvider } from "@/features/rooms/room-context";
 import { GestureHandlerRootView } from "react-native-gesture-handler";
 import { useFonts, Fredoka_700Bold } from '@expo-google-fonts/fredoka';
 import * as SplashScreen from 'expo-splash-screen';
@@ -26,17 +25,15 @@ export default function RootLayout() {
 
   return (
     <GestureHandlerRootView style={{ flex: 1 }}>
-      <RoomProvider>
-        <Stack>
-          <Stack.Screen name="index" options={{ headerShown: false }} />
-          <Stack.Screen name="(tabs)" options={{ headerShown: false }} />
-          <Stack.Screen name="create-room" options={{ presentation: "modal" }} />
-          <Stack.Screen name="join-room" options={{ presentation: "modal" }} />
-          <Stack.Screen name="add-task" options={{ presentation: "modal" }} />
-          <Stack.Screen name="task-detail" options={{ title: "Task detail" }} />
-          <Stack.Screen name="room/[code]" options={{ headerShown: false }} />
-        </Stack>
-      </RoomProvider>
+      <Stack>
+        <Stack.Screen name="index" options={{ headerShown: false }} />
+        <Stack.Screen name="(tabs)" options={{ headerShown: false }} />
+        <Stack.Screen name="create-room" options={{ presentation: "modal" }} />
+        <Stack.Screen name="join-room" options={{ presentation: "modal" }} />
+        <Stack.Screen name="add-task" options={{ presentation: "modal" }} />
+        <Stack.Screen name="task-detail" options={{ title: "Task detail" }} />
+        <Stack.Screen name="room/[code]" options={{ headerShown: false }} />
+      </Stack>
     </GestureHandlerRootView>
   );
 }
