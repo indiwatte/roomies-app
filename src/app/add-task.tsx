@@ -15,8 +15,6 @@ import Button from "@/components/Button";
 import Card from "@/components/Card";
 import ScreenHeader from "@/components/ScreenHeader";
 import { createTask } from "../api/tasks";
-import { ensureRoom } from "../api/rooms";
-import { ensureMembers } from "../api/members";
 import { useRooms } from "@/features/rooms/room-store";
 import { colors } from "../constants/colors";
 
@@ -26,58 +24,13 @@ export default function AddTaskScreen() {
     const [dueDate, setDueDate] = useState("2026-12-31");
     const [dueTime, setDueTime] = useState("18:00");
     const [selectedMemberId, setSelectedMemberId] = useState<string | null>(null);
-    const [strapiRoomId, setStrapiRoomId] = useState<string | null>(null);
-    const [memberIdMap, setMemberIdMap] = useState<Record<string, string>>({});
-    const [syncing, setSyncing] = useState(true);
     const [saving, setSaving] = useState(false);
 
     const { currentRoom, members } = useRooms();
 
-    // Zorg dat de huidige room en alle roommates ook als echte records
-    // in Strapi bestaan, zodat we ze als relatie aan de taak kunnen hangen.
     useEffect(() => {
-        let isMounted = true;
-
-        async function sync() {
-            if (!currentRoom) {
-                setSyncing(false);
-                return;
-            }
-
-            try {
-                const strapiRoom = await ensureRoom(currentRoom.code, currentRoom.name);
-                const roomId = strapiRoom?.documentId
-                    ? String(strapiRoom.documentId)
-                    : strapiRoom?.id
-                        ? String(strapiRoom.id)
-                        : null;
-                const resolvedMembers = await ensureMembers(members, roomId);
-
-                if (!isMounted) return;
-
-                setStrapiRoomId(roomId);
-                setMemberIdMap(resolvedMembers);
-                setSelectedMemberId((current) => current ?? members[0]?.id ?? null);
-            } catch (error) {
-                console.error("Fout bij synchroniseren met Strapi:", error);
-                if (isMounted) {
-                    Alert.alert(
-                        "Verbindingsfout",
-                        "Kon de room en members niet synchroniseren met de server. Controleer of de backend draait en probeer opnieuw."
-                    );
-                }
-            } finally {
-                if (isMounted) setSyncing(false);
-            }
-        }
-
-        sync();
-
-        return () => {
-            isMounted = false;
-        };
-        // eslint-disable-next-line react-hooks/exhaustive-deps
-    }, [currentRoom?.code]);
+        setSelectedMemberId((current) => current ?? members[0]?.id ?? null);
+    }, [members]);
 
     const handleSaveTask = async () => {
         if (!title.trim()) {
@@ -85,9 +38,21 @@ export default function AddTaskScreen() {
             return;
         }
 
-        if (saving || syncing) return;
+        if (saving) return;
 
-        const resolvedMemberId = selectedMemberId ? memberIdMap[selectedMemberId] ?? null : null;
+        const roomRelationId = currentRoom?.documentId ?? (currentRoom?.id ? String(currentRoom.id) : null);
+        if (!roomRelationId) {
+            Alert.alert("Room ontbreekt", "Kon geen geldige room vinden voor deze taak.");
+            return;
+        }
+
+        const selectedMember = selectedMemberId
+            ? members.find((member) => member.id === selectedMemberId)
+            : null;
+
+        const resolvedMemberId = selectedMember
+            ? selectedMember.documentId ?? String(selectedMember.id)
+            : null;
 
         const taskPayload = {
             title: title.trim(),
@@ -96,7 +61,7 @@ export default function AddTaskScreen() {
             dueTime,
             completed: false,
             recurring: false,
-            room: strapiRoomId,
+            room: roomRelationId,
             assignedTo: resolvedMemberId,
         };
 
@@ -176,7 +141,7 @@ export default function AddTaskScreen() {
                                     {member.avatarUri ? (
                                         <Image source={{ uri: member.avatarUri }} style={styles.memberAvatar} />
                                     ) : (
-                                        <View style={[styles.memberAvatar, { backgroundColor: member.avatarColor }]}> 
+                                        <View style={[styles.memberAvatar, { backgroundColor: member.avatarColor }]}>
                                             <Text style={styles.memberInitials}>{member.initials}</Text>
                                         </View>
                                     )}
@@ -192,10 +157,10 @@ export default function AddTaskScreen() {
                     </View>
 
                     <Button
-                        title={syncing ? "Even synchroniseren..." : "Save task"}
+                        title="Save task"
                         variant="dark"
                         onPress={handleSaveTask}
-                        disabled={saving || syncing}
+                        disabled={saving}
                         icon={saving ? <ActivityIndicator color={colors.white} /> : undefined}
                         style={styles.saveButton}
                     />
