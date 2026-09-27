@@ -1,5 +1,5 @@
 import { useState } from "react";
-import { router, Stack } from "expo-router";
+import { Redirect, router, Stack } from "expo-router";
 import {
     ActivityIndicator,
     KeyboardAvoidingView,
@@ -11,10 +11,12 @@ import {
 import Button from "@/components/Button";
 import Card from "@/components/Card";
 import ScreenHeader from "@/components/ScreenHeader";
+import { useAuth } from "@/features/auth/auth-store";
 import { useRooms } from "@/features/rooms/room-store";
 import { colors } from "../constants/colors";
 
 export default function CreateRoomScreen() {
+    const { isAuthenticated } = useAuth();
     const { createRoom } = useRooms();
     const [name, setName] = useState("");
     const [isCreating, setIsCreating] = useState(false);
@@ -36,6 +38,10 @@ export default function CreateRoomScreen() {
             setIsCreating(false);
         }
     };
+
+    if (!isAuthenticated) {
+        return <Redirect href="/onboarding" />;
+    }
 
     return (
         <>
