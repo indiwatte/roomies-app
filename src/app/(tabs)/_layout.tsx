@@ -1,6 +1,6 @@
 import Ionicons from "@expo/vector-icons/Ionicons";
 import { router, Tabs } from "expo-router";
-import { useEffect, useMemo, useRef, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import {
   Animated,
   Easing,
@@ -17,7 +17,6 @@ import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { useAuth } from "@/features/auth/auth-store";
 import { useRooms } from "@/features/rooms/room-store";
 import { colors } from '../../constants/colors';
-import { typography } from '../../constants/typography';
 
 
 type AnimatedTabIconProps = {
@@ -33,9 +32,9 @@ function AnimatedTabIcon({
   label,
   icon,
 }: AnimatedTabIconProps) {
-  const scale = useRef(new Animated.Value(focused ? 1.1 : 1)).current;
-  const textOpacity = useRef(new Animated.Value(focused ? 1 : 0.7)).current;
-  const textTranslate = useRef(new Animated.Value(focused ? 0 : 2)).current;
+  const [scale] = useState(() => new Animated.Value(focused ? 1.1 : 1));
+  const [textOpacity] = useState(() => new Animated.Value(focused ? 1 : 0.7));
+  const [textTranslate] = useState(() => new Animated.Value(focused ? 0 : 2));
 
   useEffect(() => {
     Animated.parallel([
@@ -158,7 +157,7 @@ export default function TabLayout() {
           I see you...
         </Text>
         <Text style={{ fontSize: 14, color: colors.textSecondary, fontStyle: "italic" }}>
-          Let's take a look at your household!
+          Let&apos;s take a look at your household!
         </Text>
       </View>
     );

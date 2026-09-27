@@ -27,7 +27,6 @@ export default function JoinRoomScreen() {
         if (!canSubmit) return;
         const normalized = code.trim().toUpperCase();
 
-        // Gebruik await omdat joinRoom nu asynchroon in Strapi zoekt!
         const success = await joinRoom(normalized);
 
         if (success) {

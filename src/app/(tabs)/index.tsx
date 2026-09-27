@@ -33,7 +33,6 @@ export default function HomeScreen() {
     const [roomTasks, setRoomTasks] = useState<StrapiTask[]>([]);
     const [loading, setLoading] = useState(true);
     const [enteredName, setEnteredName] = useState("");
-    const [isNameDismissed, setIsNameDismissed] = useState(false);
 
     const showNameModal = false;
 
@@ -117,10 +116,7 @@ export default function HomeScreen() {
                         <Button
                             title="Aan de slag!"
                             variant="primary"
-                            onPress={() => {
-                                if (!enteredName.trim()) return;
-                                setIsNameDismissed(true);
-                            }}
+                            onPress={() => undefined}
                             disabled={!enteredName.trim()}
                         />
                     </Card>
@@ -155,6 +151,10 @@ export default function HomeScreen() {
 
                 <View style={styles.badgeRow}>
                     <Card style={styles.pillBadge}>
+                        <Ionicons name="logo-bitcoin" size={12} color={colors.primary} />
+                        <Text style={styles.pillText}>{currentUser?.coins ?? 0} FishCoins</Text>
+                    </Card>
+                    <Card style={styles.pillBadge}>
                         <Ionicons name="home" size={12} color={colors.dark} />
                         <Text style={styles.pillText}>{currentRoom.name}</Text>
                     </Card>
@@ -180,7 +180,7 @@ export default function HomeScreen() {
                 ) : tasks.length === 0 ? (
                     <Card style={styles.emptyContainer}>
                         <Ionicons name="checkmark-circle-outline" size={32} color={colors.green} style={styles.emptyIcon} />
-                        <Text style={styles.emptyText}>You're clean, no pending tasks!</Text>
+                        <Text style={styles.emptyText}>You&apos;re clean, no pending tasks!</Text>
                         <Text style={styles.emptySubText}>Time to relax.</Text>
                     </Card>
                 ) : (
