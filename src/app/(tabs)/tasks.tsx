@@ -1,5 +1,6 @@
 import { router, useFocusEffect } from "expo-router";
 import * as Haptics from "expo-haptics";
+import { useAudioPlayer } from "expo-audio";
 import { useCallback, useState } from "react";
 import { Image, ScrollView, StyleSheet, Text, View } from "react-native";
 import { Gesture, GestureDetector } from "react-native-gesture-handler";
@@ -17,6 +18,7 @@ import { useSafeAreaInsets } from "react-native-safe-area-context";
 import Button from "@/components/Button";
 import Card from "@/components/Card";
 import ScreenHeader from "@/components/ScreenHeader";
+import { updateMemberCoinsInStrapi } from "@/api/members";
 import { useRooms, type MemberProfile } from "@/features/rooms/room-store";
 import { getTasksForRoom, updateTaskStatus, type StrapiTask } from "../../api/tasks";
 import { colors } from "../../constants/colors";
@@ -53,10 +55,12 @@ function TaskCard({
     task,
     assignee,
     onCompleted,
+    onSwipeMeow,
 }: {
     task: StrapiTask;
     assignee: AssigneeDisplay | null;
-    onCompleted?: (documentId: string | undefined) => void;
+    onCompleted?: (completedTask: StrapiTask) => void;
+    onSwipeMeow?: () => void;
 }) {
     const [completed, setCompleted] = useState(Boolean(task.completed));
 
@@ -76,7 +80,7 @@ function TaskCard({
             });
         }
 
-        onCompleted?.(task.documentId);
+        onCompleted?.(task);
 
         catOpacity.value = withTiming(1, {
             duration: 250,
@@ -94,6 +98,7 @@ function TaskCard({
         });
 
         Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
+        onSwipeMeow?.();
 
         setTimeout(() => {
             catTranslateY.value = withTiming(-70, {
@@ -176,6 +181,8 @@ function TaskCard({
                                     {task.dueTime ? ` • ${task.dueTime}` : ""}
                                 </Text>
 
+                                <Text style={styles.rewardText}>Reward: {Math.max(0, task.rewardValue ?? 0)} FishCoins</Text>
+
                                 {task.description ? (
                                     <Text style={styles.cardDescription} numberOfLines={2}>
                                         {task.description}
@@ -234,8 +241,9 @@ function TaskCard({
 }
 
 export default function TasksScreen() {
-    const { currentRoom, members, refreshMembers } = useRooms();
+    const { currentRoom, members, refreshMembers, updateMemberCoins } = useRooms();
     const insets = useSafeAreaInsets();
+    const meowPlayer = useAudioPlayer(require("../../../assets/meow.mp3"));
     const roomDocumentId = currentRoom?.documentId;
 
     const [tasks, setTasks] = useState<StrapiTask[]>([]);
@@ -278,11 +286,35 @@ export default function TasksScreen() {
         }, [roomDocumentId, refreshMembers])
     );
 
-    const handleCompleted = (documentId: string | undefined) => {
+    const handleCompleted = async (completedTask: StrapiTask) => {
+        const documentId = completedTask.documentId;
         if (!documentId) return;
+
+        const rewardValue = Math.max(0, Number(completedTask.rewardValue ?? 0));
+
         setTasks((current) =>
             current.map((task) => (task.documentId === documentId ? { ...task, completed: true } : task))
         );
+
+        if (rewardValue <= 0) return;
+
+        const assignedName = (completedTask.assignedTo as { name?: string } | null | undefined)?.name?.trim().toLowerCase();
+        if (!assignedName) return;
+
+        const assignedMember = members.find(
+            (member) => member.memberName.trim().toLowerCase() === assignedName
+        );
+
+        if (!assignedMember?.documentId) return;
+
+        const nextCoins = (assignedMember.coins ?? 0) + rewardValue;
+        updateMemberCoins(assignedMember.id, nextCoins);
+
+        try {
+            await updateMemberCoinsInStrapi(assignedMember.documentId, nextCoins);
+        } catch (error) {
+            console.error("Fout bij toekennen coins:", error);
+        }
     };
 
     if (!currentRoom) {
@@ -317,6 +349,11 @@ export default function TasksScreen() {
                         task={task}
                         assignee={findAssigneeDisplay(members, task.assignedTo)}
                         onCompleted={handleCompleted}
+                        onSwipeMeow={() => {
+                            void meowPlayer.seekTo(0).then(() => {
+                                meowPlayer.play();
+                            });
+                        }}
                     />
                 ))
             )}
@@ -395,6 +432,12 @@ const styles = StyleSheet.create({
     cardMeta: {
         fontSize: 14,
         color: colors.dark,
+    },
+    rewardText: {
+        fontSize: 12,
+        color: colors.primary,
+        marginTop: 6,
+        fontWeight: "700",
     },
     cardDescription: {
         fontSize: 13,
