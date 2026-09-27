@@ -7,6 +7,7 @@ import {
     ActivityIndicator,
     Alert,
     Image,
+    ImageBackground,
     ScrollView,
     StyleSheet,
     Text,
@@ -176,27 +177,36 @@ export default function MembersScreen() {
 
                         return (
                             <Card key={member.id} style={styles.memberCard}>
-                                <View style={styles.memberTopRow}>
-                                    <MemberAvatar member={member} />
+                                <ImageBackground
+                                    source={require("../../../assets/window.png")}
+                                    style={styles.memberCardBg}
+                                    imageStyle={styles.memberCardBgImage}
+                                    resizeMode="cover"
+                                >
+                                    <View style={styles.memberCardOverlay}>
+                                        <View style={styles.memberTopRow}>
+                                            <MemberAvatar member={member} />
 
-                                    <View style={styles.memberInfo}>
-                                        <Text style={styles.memberName}>{member.memberName}</Text>
-                                        <Text style={styles.memberRole}>{member.role}</Text>
+                                            <View style={styles.memberInfo}>
+                                                <Text style={styles.memberName}>{member.memberName}</Text>
+                                                <Text style={styles.memberRole}>{member.role}</Text>
+                                            </View>
+
+                                            <Ionicons name="people" size={20} color={colors.primary} />
+                                        </View>
+
+                                        {busy ? (
+                                            <ActivityIndicator size="small" color={colors.primary} style={styles.busyLoader} />
+                                        ) : (
+                                            <Button
+                                                title="Add photo"
+                                                variant="outline"
+                                                onPress={() => onPickPhoto(member)}
+                                                icon={<Ionicons name="camera" size={16} color={colors.dark} />}
+                                            />
+                                        )}
                                     </View>
-
-                                    <Ionicons name="people" size={20} color={colors.primary} />
-                                </View>
-
-                                {busy ? (
-                                    <ActivityIndicator size="small" color={colors.primary} style={styles.busyLoader} />
-                                ) : (
-                                    <Button
-                                        title="Add photo"
-                                        variant="outline"
-                                        onPress={() => onPickPhoto(member)}
-                                        icon={<Ionicons name="camera" size={16} color={colors.dark} />}
-                                    />
-                                )}
+                                </ImageBackground>
                             </Card>
                         );
                     })
@@ -250,8 +260,21 @@ const styles = StyleSheet.create({
         color: colors.dark,
     },
     memberCard: {
-        gap: 12,
+        padding: 0,
+        overflow: "hidden",
+        backgroundColor: colors.white,
         transform: [{ rotate: "-0.6deg" }],
+    },
+    memberCardBg: {
+        width: "100%",
+    },
+    memberCardBgImage: {
+        opacity: 0.9,
+    },
+    memberCardOverlay: {
+        padding: 16,
+        gap: 12,
+        backgroundColor: "rgba(255, 253, 249, 0.48)",
     },
     memberTopRow: {
         flexDirection: "row",
