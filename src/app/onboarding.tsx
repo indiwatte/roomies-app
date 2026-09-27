@@ -1,6 +1,7 @@
 import { Redirect, router, Stack } from "expo-router";
-import { useMemo, useState } from "react";
+import { useMemo, useState, useEffect } from "react";
 import { Image, KeyboardAvoidingView, Platform, StyleSheet, Text, TextInput, View } from "react-native";
+import { useAudioPlayer } from "expo-audio";
 
 import Button from "@/components/Button";
 import Card from "@/components/Card";
@@ -10,6 +11,7 @@ import { useAuth } from "@/features/auth/auth-store";
 
 export default function OnboardingScreen() {
     const { signIn, signUp, loading, error, isAuthenticated } = useAuth();
+    const meowPlayer = useAudioPlayer(require("../../assets/meow.mp3"));
 
     const [mode, setMode] = useState<"register" | "login">("register");
     const [name, setName] = useState("");
@@ -21,6 +23,20 @@ export default function OnboardingScreen() {
         if (mode === "register" && !name.trim()) return false;
         return true;
     }, [email, loading, mode, name, password]);
+
+    useEffect(() => {
+        void meowPlayer.seekTo(0).then(() => {
+            meowPlayer.play();
+        });
+
+        const interval = setInterval(() => {
+            void meowPlayer.seekTo(0).then(() => {
+                meowPlayer.play();
+            });
+        }, 4000);
+
+        return () => clearInterval(interval);
+    }, [meowPlayer]);
 
     if (isAuthenticated) {
         return <Redirect href="/" />;
@@ -44,9 +60,7 @@ export default function OnboardingScreen() {
             }
 
             router.replace("/");
-        } catch {
-            // Error message is already set in auth store.
-        }
+        } catch { }
     };
 
     return (
