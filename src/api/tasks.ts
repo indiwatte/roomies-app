@@ -10,6 +10,7 @@ export type StrapiTask = {
     dueTime?: string | null;
     completed?: boolean;
     recurring?: boolean;
+    rewardValue?: number;
     assignedTo?: unknown;
     room?: { id?: number; documentId?: string };
 };
