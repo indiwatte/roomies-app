@@ -1,15 +1,19 @@
-import { router } from "expo-router";
+import { Redirect, router } from "expo-router";
 import { Image, StyleSheet, Text, View } from "react-native";
 import { useAudioPlayer } from "expo-audio";
 import { useEffect } from "react";
+import { useSafeAreaInsets } from "react-native-safe-area-context";
 
 import { useRooms } from "@/features/rooms/room-store";
 import { colors } from '../constants/colors';
 import Button from "@/components/Button";
 import Card from "@/components/Card";
 import ScreenHeader from "@/components/ScreenHeader";
+import { useAuth } from "@/features/auth/auth-store";
 
 export default function LandingScreen() {
+    const insets = useSafeAreaInsets();
+    const { isAuthenticated } = useAuth();
     const { currentRoom } = useRooms();
 
     const meowPlayer = useAudioPlayer(
@@ -24,14 +28,16 @@ export default function LandingScreen() {
         return () => clearTimeout(timer);
     }, []);
 
-    return (
-        <View style={styles.container}>
-            <View style={styles.header}>
-                <Text style={styles.logo}>Homi</Text>
+    if (!isAuthenticated) {
+        return <Redirect href="/onboarding" />;
+    }
 
+    return (
+        <View style={[styles.container, { paddingTop: insets.top + 20 }]}>
+            <View style={styles.header}>
                 <ScreenHeader
-                    title="Together we work better"
-                    subtitle="Hello there, Im Homi, your shared house cat from now on, so let's maintain our shared homes in a cozy and fun way"
+                    title="Welcome to the gang"
+                    subtitle="I'm Homi, your house cat! Join your room, or if your new make a new one. I will be there either way"
                     style={styles.heroHeader}
                 />
             </View>
@@ -51,9 +57,6 @@ export default function LandingScreen() {
                 </Card>
             ) : null}
 
-
-
-            {/* De kat illustratie met blauwe achtergrondcirkel */}
             <View style={styles.imageContainer}>
                 <View style={styles.blueCircle} />
                 <Image
@@ -85,9 +88,9 @@ export default function LandingScreen() {
 const styles = StyleSheet.create({
     container: {
         flex: 1,
-        justifyContent: "space-between",
+        justifyContent: "flex-start",
         alignItems: "center",
-        paddingTop: 60,
+        paddingTop: 20,
         paddingBottom: 40,
         paddingHorizontal: 24,
         backgroundColor: colors.background, // primary color
@@ -97,22 +100,35 @@ const styles = StyleSheet.create({
     header: {
         alignItems: "center",
         width: "100%",
+        justifyContent: 'center',
     },
 
-    logo: {
-        fontSize: 42,
-        fontWeight: "700",
-        color: colors.dark,
-        marginBottom: 30,
-        marginTop: 30,
-    },
     heroHeader: {
         alignItems: "center",
-        marginBottom: 0,
+        marginBottom: 8,
     },
     roomCard: {
         width: "100%",
-        marginBottom: 10,
+        marginBottom: 16,
+    },
+    imageContainer: {
+        width: "100%",
+        flex: 1,
+        justifyContent: "center",
+        alignItems: "center",
+        position: "relative",
+        marginVertical: 8,
+    },
+    blueCircle: {
+        position: "absolute",
+        width: 360,
+        height: 360,
+        borderRadius: 200,
+        backgroundColor: colors.blue,
+    },
+    catImage: {
+        width: 650,
+        height: 600,
     },
     roomLabel: {
         fontSize: 12,
@@ -133,27 +149,9 @@ const styles = StyleSheet.create({
         marginTop: 2,
         marginBottom: 10,
     },
-    imageContainer: {
-        width: "100%",
-        height: 220,
-        justifyContent: "center",
-        alignItems: "center",
-        position: "relative",
-        marginVertical: 10,
-    },
-    blueCircle: {
-        position: "absolute",
-        width: 300,
-        height: 300,
-        borderRadius: 150,
-        backgroundColor: colors.blue,// blue color
-    },
-    catImage: {
-        width: 520,
-        height: 520,
-    },
     buttonContainer: {
         width: "100%",
+        marginTop: "auto",
     },
 
 });
