@@ -1,4 +1,5 @@
 import { API_URL } from "./config";
+import { withAuthHeaders } from "./auth-headers";
 
 export type StrapiMember = {
     id?: number;
@@ -27,7 +28,9 @@ type LocalMember = {
 // Haal alle members op (algemeen)
 export async function getMembers(): Promise<StrapiMember[]> {
     try {
-        const response = await fetch(`${API_URL}/members?populate=*`);
+        const response = await fetch(`${API_URL}/members?populate=*`, {
+            headers: withAuthHeaders(),
+        });
         const json = (await response.json()) as StrapiListResponse<StrapiMember>;
 
         if (!response.ok) {
@@ -45,7 +48,10 @@ export async function getMembers(): Promise<StrapiMember[]> {
 export async function getMembersForRoom(roomId: string): Promise<StrapiMember[]> {
     try {
         const response = await fetch(
-            `${API_URL}/members?filters[room][documentId][$eq]=${encodeURIComponent(roomId)}&populate=*`
+            `${API_URL}/members?filters[room][documentId][$eq]=${encodeURIComponent(roomId)}&populate=*`,
+            {
+                headers: withAuthHeaders(),
+            }
         );
         const json = (await response.json()) as StrapiListResponse<StrapiMember>;
 
@@ -64,9 +70,9 @@ export async function getMembersForRoom(roomId: string): Promise<StrapiMember[]>
 export async function createMemberInStrapi(memberData: Record<string, unknown>): Promise<StrapiMember> {
     const response = await fetch(`${API_URL}/members`, {
         method: "POST",
-        headers: {
+        headers: withAuthHeaders({
             "Content-Type": "application/json",
-        },
+        }),
         body: JSON.stringify({ data: memberData }),
     });
 
@@ -77,6 +83,57 @@ export async function createMemberInStrapi(memberData: Record<string, unknown>):
     }
 
     return json.data as StrapiMember;
+}
+
+export async function updateMemberAvatarInStrapi(
+    documentId: string,
+    avatarUri: string
+): Promise<StrapiMember> {
+    const response = await fetch(`${API_URL}/members/${documentId}`, {
+        method: "PUT",
+        headers: withAuthHeaders({
+            "Content-Type": "application/json",
+        }),
+        body: JSON.stringify({
+            data: {
+                avatar: avatarUri,
+            },
+        }),
+    });
+
+    const json = (await response.json()) as StrapiSingleResponse<StrapiMember>;
+
+    if (!response.ok) {
+        throw new Error(json?.error?.message || `Kon member avatar niet updaten (${response.status})`);
+    }
+
+    return json.data as StrapiMember;
+}
+
+export async function joinOrClaimMember(code: string, name: string): Promise<StrapiMember | null> {
+    try {
+        const response = await fetch(`${API_URL}/members/join-or-claim`, {
+            method: "POST",
+            headers: withAuthHeaders({
+                "Content-Type": "application/json",
+            }),
+            body: JSON.stringify({ code, name }),
+        });
+
+        const json = (await response.json()) as {
+            data?: StrapiMember;
+            error?: { message?: string };
+        };
+
+        if (!response.ok) {
+            throw new Error(json?.error?.message || `Kon member niet claimen (${response.status})`);
+        }
+
+        return json?.data ?? null;
+    } catch (error) {
+        console.error("Fout bij claimen member:", error);
+        return null;
+    }
 }
 
 // Zorgt dat elk lokaal roommate-profiel een bijbehorend Strapi member record heeft

@@ -1,48 +1,52 @@
-import { Redirect } from "expo-router";
-import { useState } from "react";
-import { StyleSheet, Text, View, TextInput } from "react-native";
+import { Redirect, router } from "expo-router";
+import { StyleSheet, Text, View } from "react-native";
+import { useSafeAreaInsets } from "react-native-safe-area-context";
 
 import Button from "@/components/Button";
 import Card from "@/components/Card";
 import ScreenHeader from "@/components/ScreenHeader";
+import { colors } from "@/constants/colors";
+import { useAuth } from "@/features/auth/auth-store";
 import { useRooms } from "@/features/rooms/room-store";
-import { colors } from "../../constants/colors";
 
 export default function ProfileScreen() {
-    const { currentRoom, members, setMyProfile } = useRooms();
-    const myProfile = members.find((m) => m.id === "you");
-
-    const [name, setName] = useState(myProfile?.memberName ?? "");
-    const [saved, setSaved] = useState(false);
+    const insets = useSafeAreaInsets();
+    const { currentRoom } = useRooms();
+    const { user, signOut } = useAuth();
 
     if (!currentRoom) {
         return <Redirect href="/" />;
     }
 
-    const handleSave = () => {
-        if (!name.trim()) return;
-        setMyProfile(name, colors.assigneeBorder);
-        setSaved(true);
-        setTimeout(() => setSaved(false), 2000);
-    };
-
     return (
-        <View style={styles.container}>
-            <ScreenHeader title="Your Profile" subtitle={`Set your name for room ${currentRoom.name}.`} />
+        <View style={[styles.container, { paddingTop: insets.top + 20 }]}>
+            <ScreenHeader
+                title="Your Account"
+                subtitle={`Signed in for room ${currentRoom.name}`}
+            />
 
-            <Card style={styles.form}>
-                <Text style={styles.label}>Your Name</Text>
-                <TextInput
-                    style={styles.input}
-                    placeholder="Enter your name..."
-                    placeholderTextColor={colors.textDisabled}
-                    value={name}
-                    onChangeText={setName}
+            <Card>
+                <Text style={styles.label}>Username</Text>
+                <Text style={styles.value}>{user?.username ?? "Unknown"}</Text>
+
+                <Text style={styles.label}>Email</Text>
+                <Text style={styles.value}>{user?.email ?? "No email"}</Text>
+
+                <Button
+                    title="Log out"
+                    variant="outline"
+                    onPress={() => {
+                        signOut();
+                        useRooms.setState({
+                            rooms: {},
+                            currentRoomCode: null,
+                            currentRoom: undefined,
+                            members: [],
+                        });
+                        router.replace("/onboarding");
+                    }}
+                    style={styles.logoutButton}
                 />
-
-                <Button title="Save Profile" variant="dark" onPress={handleSave} />
-
-                {saved && <Text style={styles.successText}>Profile saved successfully! ✓</Text>}
             </Card>
         </View>
     );
@@ -52,31 +56,22 @@ const styles = StyleSheet.create({
     container: {
         flex: 1,
         padding: 24,
+        paddingTop: 20,
         backgroundColor: colors.screenBg,
     },
-    form: {
-        padding: 20,
-    },
     label: {
-        fontSize: 14,
-        fontWeight: "600",
-        color: colors.textSecondary,
-        marginBottom: 8,
+        fontSize: 12,
+        fontWeight: "700",
+        color: colors.textMuted,
+        textTransform: "uppercase",
+        marginBottom: 4,
     },
-    input: {
-        borderWidth: 1,
-        borderColor: colors.border,
-        borderRadius: 12,
-        padding: 16,
+    value: {
         fontSize: 16,
-        backgroundColor: colors.background,
-        marginBottom: 20,
         color: colors.dark,
+        marginBottom: 16,
     },
-    successText: {
-        marginTop: 12,
-        color: colors.checkCircleBg,
-        fontWeight: "600",
-        textAlign: "center",
+    logoutButton: {
+        marginTop: 8,
     },
 });

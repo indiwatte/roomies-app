@@ -1,5 +1,5 @@
 import { useState } from "react";
-import { router, Stack } from "expo-router";
+import { Redirect, router, Stack } from "expo-router";
 import {
     KeyboardAvoidingView,
     Platform,
@@ -11,10 +11,12 @@ import {
 import Button from "@/components/Button";
 import Card from "@/components/Card";
 import ScreenHeader from "@/components/ScreenHeader";
+import { useAuth } from "@/features/auth/auth-store";
 import { useRooms } from "@/features/rooms/room-store";
 import { colors } from "../constants/colors";
 
 export default function JoinRoomScreen() {
+    const { isAuthenticated } = useAuth();
     const { joinRoom } = useRooms();
     const [code, setCode] = useState("");
     const [error, setError] = useState<string | null>(null);
@@ -35,6 +37,10 @@ export default function JoinRoomScreen() {
             setError("Room niet gevonden. Controleer de code.");
         }
     };
+
+    if (!isAuthenticated) {
+        return <Redirect href="/onboarding" />;
+    }
 
     return (
         <>

@@ -224,7 +224,7 @@ function TaskCard({
                     <Text style={styles.speechText}>Keep going!</Text>
                 </Card>
                 <Image
-                    source={require("../../../assets/cat-face.png")}
+                    source={require("../../../assets/cat-home.png")}
                     style={styles.feedbackCat}
                     resizeMode="contain"
                 />

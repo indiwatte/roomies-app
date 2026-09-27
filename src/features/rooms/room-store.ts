@@ -1,9 +1,9 @@
 import { create } from "zustand";
 
 import { generateRoomCode } from "@/features/rooms/generate-room-code";
-import { createRoomInStrapi } from "../../api/rooms";
-import { getMembersForRoom, createMemberInStrapi } from "../../api/members"; // Importeer member API
-import { API_URL } from "../../api/config";
+import { useAuth } from "@/features/auth/auth-store";
+import { createRoomInStrapi, createSecureRoom, getRoomByCode } from "../../api/rooms";
+import { getMembersForRoom, createMemberInStrapi, joinOrClaimMember } from "../../api/members"; // Importeer member API
 
 export type Room = {
     id?: number;
@@ -43,16 +43,29 @@ export const useRooms = create<RoomState>((set, get) => {
     // een room ophaalt bij Strapi en de store bijwerkt.
     const loadMembersForCurrentRoom = async (roomDocId: string) => {
         const strapiMembers = await getMembersForRoom(roomDocId);
-        const mapped = strapiMembers.map((m: any) => ({
-            id: String(m.id),
-            documentId: m.documentId,
-            roomName: m.room?.name,
-            memberName: m.name,
-            role: m.role || "Member",
-            initials: m.name ? m.name.slice(0, 2).toUpperCase() : "ME",
-            avatarColor: "#F6CFA3",
-            avatarUri: null,
-        }));
+        const seen = new Set<string>();
+        const mapped = strapiMembers.reduce<MemberProfile[]>((acc, m: any) => {
+            const normalizedName = String(m.name ?? "").trim().toLowerCase();
+            const dedupeKey = m?.user?.id ? `user:${String(m.user.id)}` : `name:${normalizedName}`;
+
+            if (seen.has(dedupeKey)) {
+                return acc;
+            }
+
+            seen.add(dedupeKey);
+            acc.push({
+                id: String(m.id),
+                documentId: m.documentId,
+                roomName: m.room?.name,
+                memberName: m.name,
+                role: m.role || "Member",
+                initials: m.name ? m.name.slice(0, 2).toUpperCase() : "ME",
+                avatarColor: "#F6CFA3",
+                avatarUri: m.avatar ?? null,
+            });
+
+            return acc;
+        }, []);
         set({ members: mapped });
     };
 
@@ -63,12 +76,15 @@ export const useRooms = create<RoomState>((set, get) => {
         members: [],
 
         createRoom: async (name: string) => {
-            const code = generateRoomCode();
+            const fallbackCode = generateRoomCode();
 
-            const strapiResponse = await createRoomInStrapi({
+            const secureResponse = await createSecureRoom(name);
+            const strapiResponse = secureResponse ?? (await createRoomInStrapi({
                 name: name,
-                code: code,
-            });
+                code: fallbackCode,
+            }));
+
+            const code = String(strapiResponse?.code ?? fallbackCode);
 
             const newRoom: Room = {
                 id: strapiResponse?.id,
@@ -94,18 +110,18 @@ export const useRooms = create<RoomState>((set, get) => {
 
             if (rooms[normalizedCode]) {
                 set({ currentRoomCode: normalizedCode, currentRoom: rooms[normalizedCode] });
+                const authUser = useAuth.getState().user;
+                if (authUser?.username) {
+                    await joinOrClaimMember(normalizedCode, authUser.username);
+                }
                 await loadMembersForCurrentRoom(rooms[normalizedCode].documentId!);
                 return true;
             }
 
             try {
-                const response = await fetch(
-                    `${API_URL}/rooms?filters[code][$eq]=${encodeURIComponent(normalizedCode)}`
-                );
-                const data = await response.json();
+                const strapiRoom = await getRoomByCode(normalizedCode);
 
-                if (data.data && data.data.length > 0) {
-                    const strapiRoom = data.data[0];
+                if (strapiRoom) {
                     const roomObj: Room = {
                         id: strapiRoom.id,
                         documentId: strapiRoom.documentId,
@@ -120,12 +136,18 @@ export const useRooms = create<RoomState>((set, get) => {
                         currentRoom: roomObj,
                     }));
 
-                    // Laad direct de members die bij deze kamer horen uit Strapi!
-                    await loadMembersForCurrentRoom(strapiRoom.documentId);
+                    const authUser = useAuth.getState().user;
+                    if (authUser?.username) {
+                        await joinOrClaimMember(normalizedCode, authUser.username);
+                    }
+
+                    if (strapiRoom.documentId) {
+                        await loadMembersForCurrentRoom(strapiRoom.documentId);
+                    }
                     return true;
                 }
             } catch (error) {
-                console.error("Fout bij opzoeken room in Strapi:", error);
+                console.warn("Room lookup mislukt:", error);
             }
 
             return false;
