@@ -14,6 +14,7 @@ import {
 } from "react-native";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 
+import { useAuth } from "@/features/auth/auth-store";
 import { useRooms } from "@/features/rooms/room-store";
 import { colors } from '../../constants/colors';
 import { typography } from '../../constants/typography';
@@ -121,6 +122,7 @@ function TopRightProfileBar() {
 }
 
 export default function TabLayout() {
+  const { isAuthenticated } = useAuth();
   const { currentRoom } = useRooms();
   const [isLoading, setIsLoading] = useState(true);
 
@@ -133,10 +135,15 @@ export default function TabLayout() {
   }, []);
 
   useEffect(() => {
-    if (!isLoading && !currentRoom) {
+    if (!isLoading && !isAuthenticated) {
+      router.replace("/onboarding");
+      return;
+    }
+
+    if (!isLoading && isAuthenticated && !currentRoom) {
       router.replace("/");
     }
-  }, [currentRoom, isLoading]);
+  }, [currentRoom, isAuthenticated, isLoading]);
 
 
   if (isLoading) {
@@ -151,7 +158,7 @@ export default function TabLayout() {
           I see you...
         </Text>
         <Text style={{ fontSize: 14, color: colors.textSecondary, fontStyle: "italic" }}>
-          Even loeren naar je huishouden...
+          Let's take a look at your household!
         </Text>
       </View>
     );
