@@ -26,7 +26,7 @@ export default function LandingScreen() {
         }, 500);
 
         return () => clearTimeout(timer);
-    }, []);
+    }, [meowPlayer]);
 
     if (!isAuthenticated) {
         return <Redirect href="/onboarding" />;
@@ -93,7 +93,7 @@ const styles = StyleSheet.create({
         paddingTop: 20,
         paddingBottom: 40,
         paddingHorizontal: 24,
-        backgroundColor: colors.background, // primary color
+        backgroundColor: colors.background,
     },
 
 
