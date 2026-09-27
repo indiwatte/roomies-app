@@ -1,4 +1,5 @@
 import { API_URL } from "./config";
+import { withAuthHeaders } from "./auth-headers";
 
 export type StrapiTask = {
     id?: number;
@@ -26,7 +27,9 @@ type StrapiSingleResponse<T> = {
 // Haal alle taken op (algemeen)
 export async function getTasks(): Promise<StrapiTask[]> {
     try {
-        const response = await fetch(`${API_URL}/tasks?populate=*&sort=createdAt:asc`);
+        const response = await fetch(`${API_URL}/tasks?populate=*&sort=createdAt:asc`, {
+            headers: withAuthHeaders(),
+        });
         const json = (await response.json()) as StrapiListResponse<StrapiTask>;
 
         if (!response.ok) {
@@ -44,7 +47,10 @@ export async function getTasks(): Promise<StrapiTask[]> {
 export async function getTasksForRoom(roomId: string): Promise<StrapiTask[]> {
     try {
         const response = await fetch(
-            `${API_URL}/tasks?filters[room][documentId][$eq]=${encodeURIComponent(roomId)}&populate=*&sort=createdAt:asc`
+            `${API_URL}/tasks?filters[room][documentId][$eq]=${encodeURIComponent(roomId)}&populate=*&sort=createdAt:asc`,
+            {
+                headers: withAuthHeaders(),
+            }
         );
         const json = (await response.json()) as StrapiListResponse<StrapiTask>;
 
@@ -63,9 +69,9 @@ export async function getTasksForRoom(roomId: string): Promise<StrapiTask[]> {
 export async function createTask(taskData: Record<string, unknown>): Promise<StrapiTask> {
     const response = await fetch(`${API_URL}/tasks`, {
         method: "POST",
-        headers: {
+        headers: withAuthHeaders({
             "Content-Type": "application/json",
-        },
+        }),
         body: JSON.stringify({ data: taskData }),
     });
 
@@ -82,9 +88,9 @@ export async function createTask(taskData: Record<string, unknown>): Promise<Str
 export async function updateTaskStatus(documentId: string, completedStatus: boolean): Promise<StrapiTask> {
     const response = await fetch(`${API_URL}/tasks/${documentId}`, {
         method: "PUT",
-        headers: {
+        headers: withAuthHeaders({
             "Content-Type": "application/json",
-        },
+        }),
         body: JSON.stringify({
             data: { completed: completedStatus },
         }),
