@@ -1,5 +1,5 @@
 import { Stack, router } from "expo-router";
-import { useEffect, useState } from "react";
+import { useState } from "react";
 import {
     ActivityIndicator,
     Alert,
@@ -23,14 +23,12 @@ export default function AddTaskScreen() {
     const [description, setDescription] = useState("");
     const [dueDate, setDueDate] = useState("2026-12-31");
     const [dueTime, setDueTime] = useState("18:00");
+    const [rewardValue, setRewardValue] = useState("10");
     const [selectedMemberId, setSelectedMemberId] = useState<string | null>(null);
     const [saving, setSaving] = useState(false);
 
     const { currentRoom, members } = useRooms();
-
-    useEffect(() => {
-        setSelectedMemberId((current) => current ?? members[0]?.id ?? null);
-    }, [members]);
+    const effectiveSelectedMemberId = selectedMemberId ?? members[0]?.id ?? null;
 
     const handleSaveTask = async () => {
         if (!title.trim()) {
@@ -46,8 +44,8 @@ export default function AddTaskScreen() {
             return;
         }
 
-        const selectedMember = selectedMemberId
-            ? members.find((member) => member.id === selectedMemberId)
+        const selectedMember = effectiveSelectedMemberId
+            ? members.find((member) => member.id === effectiveSelectedMemberId)
             : null;
 
         const resolvedMemberId = selectedMember
@@ -59,6 +57,7 @@ export default function AddTaskScreen() {
             description,
             dueDate,
             dueTime,
+            rewardValue: Math.max(0, Number.parseInt(rewardValue || "0", 10) || 0),
             completed: false,
             recurring: false,
             room: roomRelationId,
@@ -127,10 +126,20 @@ export default function AddTaskScreen() {
                         onChangeText={setDueTime}
                     />
 
+                    <Text style={styles.label}>Reward (FishCoins)</Text>
+                    <TextInput
+                        style={styles.input}
+                        placeholder="10"
+                        placeholderTextColor={colors.textDisabled}
+                        value={rewardValue}
+                        onChangeText={setRewardValue}
+                        keyboardType="numeric"
+                    />
+
                     <Text style={styles.label}>Assign to</Text>
                     <View style={styles.memberRow}>
                         {members.map((member) => {
-                            const isSelected = selectedMemberId === member.id;
+                            const isSelected = effectiveSelectedMemberId === member.id;
 
                             return (
                                 <Card
