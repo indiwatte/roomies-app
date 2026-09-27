@@ -18,12 +18,14 @@ import { useSafeAreaInsets } from "react-native-safe-area-context";
 import Button from "@/components/Button";
 import Card from "@/components/Card";
 import { useRooms } from "@/features/rooms/room-store";
+import { useAuth } from "@/features/auth/auth-store";
 import { getTasksForRoom, type StrapiTask } from "../../api/tasks";
 import { colors } from "../../constants/colors";
 import { typography } from "../../constants/typography";
 
 export default function HomeScreen() {
     const { currentRoom, members, refreshMembers } = useRooms();
+    const { user } = useAuth();
     const insets = useSafeAreaInsets();
     const roomDocumentId = currentRoom?.documentId;
     const currentUser = members.find((member) => member.id === "you") ?? members[0];
@@ -33,13 +35,13 @@ export default function HomeScreen() {
     const [enteredName, setEnteredName] = useState("");
     const [isNameDismissed, setIsNameDismissed] = useState(false);
 
-    const needsName = !currentUser || currentUser.memberName === "You" || !currentUser.memberName;
-    const showNameModal = needsName && !isNameDismissed;
+    const showNameModal = false;
 
     const displayName =
-        currentUser?.memberName && currentUser.memberName !== "You"
+        user?.username ||
+        (currentUser?.memberName && currentUser.memberName !== "You"
             ? currentUser.memberName
-            : enteredName || "You";
+            : enteredName || "You");
 
     const tasks = useMemo(() => {
         const myNormalizedName = displayName !== "You" ? displayName.trim().toLowerCase() : "";
@@ -168,7 +170,7 @@ export default function HomeScreen() {
 
                 <View style={styles.sectionHeader}>
                     <Text style={styles.sectionTitle}>Your Tasks</Text>
-                    <Pressable onPress={() => router.push("/tasks")}> 
+                    <Pressable onPress={() => router.push("/tasks")}>
                         <Text style={styles.seeAllText}>View all ({tasks.length})</Text>
                     </Pressable>
                 </View>
@@ -178,8 +180,8 @@ export default function HomeScreen() {
                 ) : tasks.length === 0 ? (
                     <Card style={styles.emptyContainer}>
                         <Ionicons name="checkmark-circle-outline" size={32} color={colors.green} style={styles.emptyIcon} />
-                        <Text style={styles.emptyText}>Geen openstaande taken in deze room!</Text>
-                        <Text style={styles.emptySubText}>Tijd om te ontspannen.</Text>
+                        <Text style={styles.emptyText}>You're clean, no pending tasks!</Text>
+                        <Text style={styles.emptySubText}>Time to relax.</Text>
                     </Card>
                 ) : (
                     tasks.map((task, index) => {
@@ -277,12 +279,13 @@ const styles = StyleSheet.create({
         opacity: 0.2,
     },
     catLyingImage: {
-        width: 360,
-        height: 220,
+        width: 450,
+        height: 290,
         alignSelf: "flex-end",
         position: "absolute",
-        bottom: -90,
-        left: -20,
+        bottom: -150,
+        left: 70,
+        zIndex: 100,
     },
     bottomSheet: {
         flex: 1,
