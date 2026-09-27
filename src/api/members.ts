@@ -7,6 +7,7 @@ export type StrapiMember = {
     name: string;
     avatar?: string;
     role?: string;
+    coins?: number;
 };
 
 type StrapiListResponse<T> = {
@@ -25,6 +26,15 @@ type LocalMember = {
     avatarUri: string | null;
 };
 
+function isExpectedAuthError(responseStatus: number, message: string): boolean {
+    const normalized = message.toLowerCase();
+    return (
+        responseStatus === 401 ||
+        responseStatus === 403 ||
+        normalized.includes("missing or invalid credentials")
+    );
+}
+
 // Haal alle members op (algemeen)
 export async function getMembers(): Promise<StrapiMember[]> {
     try {
@@ -34,12 +44,16 @@ export async function getMembers(): Promise<StrapiMember[]> {
         const json = (await response.json()) as StrapiListResponse<StrapiMember>;
 
         if (!response.ok) {
-            throw new Error(json?.error?.message || `Kon members niet ophalen (${response.status})`);
+            const message = json?.error?.message || `Kon members niet ophalen (${response.status})`;
+            if (isExpectedAuthError(response.status, message)) {
+                return [];
+            }
+            throw new Error(message);
         }
 
         return json.data ?? [];
     } catch (error) {
-        console.error("Fout bij ophalen members:", error);
+        console.warn("Members ophalen mislukt:", error);
         return [];
     }
 }
@@ -56,12 +70,16 @@ export async function getMembersForRoom(roomId: string): Promise<StrapiMember[]>
         const json = (await response.json()) as StrapiListResponse<StrapiMember>;
 
         if (!response.ok) {
-            throw new Error(json?.error?.message || `Kon members voor room niet ophalen (${response.status})`);
+            const message = json?.error?.message || `Kon members voor room niet ophalen (${response.status})`;
+            if (isExpectedAuthError(response.status, message)) {
+                return [];
+            }
+            throw new Error(message);
         }
 
         return json.data ?? [];
     } catch (error) {
-        console.error("Fout bij ophalen members voor room:", error);
+        console.warn("Members voor room ophalen mislukt:", error);
         return [];
     }
 }
@@ -105,6 +123,33 @@ export async function updateMemberAvatarInStrapi(
 
     if (!response.ok) {
         throw new Error(json?.error?.message || `Kon member avatar niet updaten (${response.status})`);
+    }
+
+    return json.data as StrapiMember;
+}
+
+export async function updateMemberCoinsInStrapi(
+    documentId: string,
+    coins: number
+): Promise<StrapiMember> {
+    const nextCoins = Math.max(0, Math.floor(coins));
+
+    const response = await fetch(`${API_URL}/members/${documentId}`, {
+        method: "PUT",
+        headers: withAuthHeaders({
+            "Content-Type": "application/json",
+        }),
+        body: JSON.stringify({
+            data: {
+                coins: nextCoins,
+            },
+        }),
+    });
+
+    const json = (await response.json()) as StrapiSingleResponse<StrapiMember>;
+
+    if (!response.ok) {
+        throw new Error(json?.error?.message || `Kon member coins niet updaten (${response.status})`);
     }
 
     return json.data as StrapiMember;
