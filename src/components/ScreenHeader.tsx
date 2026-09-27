@@ -20,6 +20,8 @@ export default function ScreenHeader({ title, subtitle, style }: ScreenHeaderPro
 
 const styles = StyleSheet.create({
     wrap: {
+        minHeight: 84,
+        justifyContent: "flex-start",
         marginBottom: 20,
     },
     title: {
@@ -31,5 +33,6 @@ const styles = StyleSheet.create({
     subtitle: {
         fontSize: 15,
         color: colors.textSecondary,
+        textAlign: "left",
     },
 });
