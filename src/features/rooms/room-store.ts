@@ -3,7 +3,7 @@ import { create } from "zustand";
 import { generateRoomCode } from "@/features/rooms/generate-room-code";
 import { useAuth } from "@/features/auth/auth-store";
 import { createRoomInStrapi, createSecureRoom, getRoomByCode } from "../../api/rooms";
-import { getMembersForRoom, createMemberInStrapi, joinOrClaimMember } from "../../api/members"; // Importeer member API
+import { getMembersForRoom, createMemberInStrapi, joinOrClaimMember } from "../../api/members";
 
 export type Room = {
     id?: number;
@@ -19,6 +19,7 @@ export type MemberProfile = {
     roomName?: string;
     memberName: string;
     role: string;
+    coins: number;
     initials: string;
     avatarColor: string;
     avatarUri: string | null;
@@ -35,6 +36,7 @@ type RoomState = {
     setCurrentRoom: (code: string) => boolean;
     setMyProfile: (name: string, color: string) => Promise<void>;
     updateMemberAvatar: (memberId: string, avatarUri: string) => void;
+    updateMemberCoins: (memberId: string, coins: number) => void;
     refreshMembers: () => Promise<void>;
 };
 
@@ -59,6 +61,7 @@ export const useRooms = create<RoomState>((set, get) => {
                 roomName: m.room?.name,
                 memberName: m.name,
                 role: m.role || "Member",
+                coins: typeof m.coins === "number" ? m.coins : 0,
                 initials: m.name ? m.name.slice(0, 2).toUpperCase() : "ME",
                 avatarColor: "#F6CFA3",
                 avatarUri: m.avatar ?? null,
@@ -197,6 +200,7 @@ export const useRooms = create<RoomState>((set, get) => {
                             id: "you",
                             memberName: name,
                             role: "Owner",
+                            coins: 0,
                             initials,
                             avatarColor: color || "#F6CFA3",
                             avatarUri: null,
@@ -211,6 +215,15 @@ export const useRooms = create<RoomState>((set, get) => {
             set((state) => ({
                 members: state.members.map((member) =>
                     member.id === memberId ? { ...member, avatarUri } : member
+                ),
+            }));
+        },
+
+        updateMemberCoins: (memberId: string, coins: number) => {
+            const nextCoins = Math.max(0, Math.floor(coins));
+            set((state) => ({
+                members: state.members.map((member) =>
+                    member.id === memberId ? { ...member, coins: nextCoins } : member
                 ),
             }));
         },
