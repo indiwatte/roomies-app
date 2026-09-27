@@ -2,25 +2,29 @@ import { Stack } from "expo-router";
 import { GestureHandlerRootView } from "react-native-gesture-handler";
 import { useFonts, Fredoka_700Bold } from '@expo-google-fonts/fredoka';
 import * as SplashScreen from 'expo-splash-screen';
+import { setAudioModeAsync } from 'expo-audio';
 import { useEffect } from 'react';
 
-// Zorg dat de splash screen blijft staan tot geladen
 SplashScreen.preventAutoHideAsync();
 
 export default function RootLayout() {
-  // 1. Laad hier feitelijk het font in en geef het een schone naam: 'Fredoka'
   const [loaded] = useFonts({
     'Fredoka': Fredoka_700Bold,
   });
 
   useEffect(() => {
+    void setAudioModeAsync({
+      playsInSilentMode: true,
+      interruptionMode: 'mixWithOthers',
+    });
+
     if (loaded) {
-      SplashScreen.hideAsync();
+      void SplashScreen.hideAsync();
     }
   }, [loaded]);
 
   if (!loaded) {
-    return null; // Houdt het scherm leeg tot het font klaar is
+    return null;
   }
 
   return (
