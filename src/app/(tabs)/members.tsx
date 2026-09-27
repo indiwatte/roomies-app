@@ -17,6 +17,7 @@ import { useSafeAreaInsets } from "react-native-safe-area-context";
 import Button from "@/components/Button";
 import Card from "@/components/Card";
 import ScreenHeader from "@/components/ScreenHeader";
+import { updateMemberAvatarInStrapi } from "@/api/members";
 import { type MemberProfile, useRooms } from "@/features/rooms/room-store";
 import { colors } from "../../constants/colors";
 
@@ -43,7 +44,33 @@ export default function MembersScreen() {
         }, [refreshMembers])
     );
 
-    const processAndSaveAvatar = async (memberId: string, sourceUri: string) => {
+    const ensureCameraPermission = async () => {
+        const current = await ImagePicker.getCameraPermissionsAsync();
+        if (current.granted) return true;
+
+        const requested = await ImagePicker.requestCameraPermissionsAsync();
+        if (!requested.granted) {
+            Alert.alert("Permission required", "Camera access is required.");
+            return false;
+        }
+
+        return true;
+    };
+
+    const ensureLibraryPermission = async () => {
+        const current = await ImagePicker.getMediaLibraryPermissionsAsync();
+        if (current.granted) return true;
+
+        const requested = await ImagePicker.requestMediaLibraryPermissionsAsync();
+        if (!requested.granted) {
+            Alert.alert("Permission required", "Photo library access is required.");
+            return false;
+        }
+
+        return true;
+    };
+
+    const processAndSaveAvatar = async (member: MemberProfile, sourceUri: string) => {
         const result = await ImageManipulator.manipulateAsync(
             sourceUri,
             [{ resize: { width: 512, height: 512 } }],
@@ -53,13 +80,17 @@ export default function MembersScreen() {
             }
         );
 
-        updateMemberAvatar(memberId, result.uri);
+        if (member.documentId) {
+            await updateMemberAvatarInStrapi(member.documentId, result.uri);
+        }
+
+        updateMemberAvatar(member.id, result.uri);
+        void refreshMembers();
     };
 
-    const pickFromLibrary = async (memberId: string) => {
-        const permission = await ImagePicker.requestMediaLibraryPermissionsAsync();
-        if (!permission.granted) {
-            Alert.alert("Permission required", "Photo library access is required.");
+    const pickFromLibrary = async (member: MemberProfile) => {
+        const hasPermission = await ensureLibraryPermission();
+        if (!hasPermission) {
             return;
         }
 
@@ -71,15 +102,17 @@ export default function MembersScreen() {
         });
 
         if (result.canceled || !result.assets[0]?.uri) return;
-        await processAndSaveAvatar(memberId, result.assets[0].uri);
+        await processAndSaveAvatar(member, result.assets[0].uri);
     };
 
-    const takePhoto = async (memberId: string) => {
-        const permission = await ImagePicker.requestCameraPermissionsAsync();
-        if (!permission.granted) {
-            Alert.alert("Permission required", "Camera access is required.");
+    const takePhoto = async (member: MemberProfile) => {
+        const hasPermission = await ensureCameraPermission();
+        if (!hasPermission) {
             return;
         }
+
+        // On first permission grant, a short delay prevents native camera from hanging.
+        await new Promise((resolve) => setTimeout(resolve, 120));
 
         const result = await ImagePicker.launchCameraAsync({
             allowsEditing: true,
@@ -88,7 +121,7 @@ export default function MembersScreen() {
         });
 
         if (result.canceled || !result.assets[0]?.uri) return;
-        await processAndSaveAvatar(memberId, result.assets[0].uri);
+        await processAndSaveAvatar(member, result.assets[0].uri);
     };
 
     const onPickPhoto = (member: MemberProfile) => {
@@ -98,14 +131,14 @@ export default function MembersScreen() {
                 text: "Camera",
                 onPress: () => {
                     setProcessingMemberId(member.id);
-                    void takePhoto(member.id).finally(() => setProcessingMemberId(null));
+                    void takePhoto(member).finally(() => setProcessingMemberId(null));
                 },
             },
             {
                 text: "Gallery",
                 onPress: () => {
                     setProcessingMemberId(member.id);
-                    void pickFromLibrary(member.id).finally(() => setProcessingMemberId(null));
+                    void pickFromLibrary(member).finally(() => setProcessingMemberId(null));
                 },
             },
         ]);
@@ -121,7 +154,7 @@ export default function MembersScreen() {
 
     return (
         <View style={styles.container}>
-            <View style={[styles.header, { paddingTop: insets.top + 16 }]}> 
+            <View style={[styles.header, { paddingTop: insets.top + 16 }]}>
                 <Image source={require("../../../assets/window.png")} style={styles.windowImage} resizeMode="cover" />
                 <View style={styles.headerOverlay} />
                 <ScreenHeader
